@@ -10,7 +10,7 @@ import UIKit
 
 class HomeTVC: UITableViewController {
     
-    let itemsArray = ["Find Mike", "Buy Eggos","Destroy Demogorgon"]
+    var itemsArray = ["Find Mike", "Buy Eggos","Destroy Demogorgon"]
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -42,5 +42,22 @@ class HomeTVC: UITableViewController {
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.cellForRow(at: indexPath)?.accessoryType = tableView.cellForRow(at: indexPath)?.accessoryType == .checkmark ? .none : .checkmark
         tableView.deselectRow(at: indexPath, animated: true)
+    }
+    
+    // MARK: - Add New Items
+    @IBAction func didTapAdd(_ sender: UIBarButtonItem) {
+        var textField = UITextField()
+        let alert = UIAlertController(title: "Add New ToDoey Item", message: "", preferredStyle: .alert)
+        alert.addTextField { (alertTextField) in
+            textField.placeholder = "Create New Item"
+            textField = alertTextField
+        }
+        let action = UIAlertAction(title: "Add Item", style: .default) { (action) in
+            let indexPath = IndexPath(row: self.itemsArray.count, section: 0)
+            self.itemsArray.append(textField.text!)
+            self.tableView.insertRows(at: [indexPath], with: .automatic)
+        }
+        alert.addAction(action)
+        present(alert, animated: true)
     }
 }
