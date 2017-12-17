@@ -11,9 +11,13 @@ import UIKit
 class HomeTVC: UITableViewController {
     
     var itemsArray = ["Find Mike", "Buy Eggos","Destroy Demogorgon"]
+    let defaults = UserDefaults.standard
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        if let items = defaults.array(forKey: "ToDoListArray") as? [String] {
+            itemsArray = items
+        }
     }
     
     override var preferredStatusBarStyle: UIStatusBarStyle {
@@ -55,6 +59,7 @@ class HomeTVC: UITableViewController {
         let action = UIAlertAction(title: "Add Item", style: .default) { (action) in
             let indexPath = IndexPath(row: self.itemsArray.count, section: 0)
             self.itemsArray.append(textField.text!)
+            self.defaults.set(self.itemsArray, forKey: "ToDoListArray")
             self.tableView.insertRows(at: [indexPath], with: .automatic)
         }
         alert.addAction(action)
