@@ -7,22 +7,16 @@
 //
 
 import UIKit
+import CoreData
 
 class HomeTVC: UITableViewController {
     
     var itemsArray = [Item]()
     let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("Items.plist")
-
+    let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
+    
     override func viewDidLoad() {
         super.viewDidLoad()
-        
-        let newItem1 = Item(title: "Find Mike", done: true)
-        let newItem2 = Item(title: "Find Kohli", done: false)
-        let newItem3 = Item(title: "Find Anushka", done: false)
-        itemsArray.append(newItem1)
-        itemsArray.append(newItem2)
-        itemsArray.append(newItem3)
-        
         loadItems()
     }
     
@@ -59,14 +53,22 @@ class HomeTVC: UITableViewController {
         tableView.deselectRow(at: indexPath, animated: true)
     }
     
+    override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCellEditingStyle, forRowAt indexPath: IndexPath) {
+        if editingStyle == .delete {
+            let item = itemsArray[indexPath.row]
+            context.delete(item)
+            itemsArray.remove(at: indexPath.row)
+            let indexPath = IndexPath(row: indexPath.row, section: 0)
+            tableView.deleteRows(at: [indexPath], with: .automatic)
+        }
+    }
+    
     // MARK: - Add New Items
     fileprivate func saveItems() {
-        let encoder = PropertyListEncoder()
         do {
-            let data = try encoder.encode(self.itemsArray)
-            try data.write(to: self.dataFilePath!)
+            try context.save()
         } catch {
-            print("Error encoding item array", error.localizedDescription)
+            print("Error saving into context`", error.localizedDescription)
         }
     }
     
@@ -79,7 +81,10 @@ class HomeTVC: UITableViewController {
         }
         let action = UIAlertAction(title: "Add Item", style: .default) { (action) in
             let indexPath = IndexPath(row: self.itemsArray.count, section: 0)
-            self.itemsArray.append(Item(title: textField.text!, done: false))
+            let newItem = Item(context: self.context)
+            newItem.title = textField.text
+            newItem.done = false
+            self.itemsArray.append(newItem)
             self.saveItems()
             self.tableView.insertRows(at: [indexPath], with: .automatic)
         }
@@ -88,12 +93,12 @@ class HomeTVC: UITableViewController {
     }
     
     func loadItems() {
+        let request: NSFetchRequest<Item> = Item.fetchRequest()
         do {
-            let data = try Data(contentsOf: dataFilePath!)
-            let decoder = PropertyListDecoder()
-            self.itemsArray = try decoder.decode([Item].self, from: data)
+            itemsArray = try context.fetch(request)
+            tableView.reloadData()
         } catch {
-            print("Error decoding")
+            print("Error fetching data with context : ", error.localizedDescription)
         }
         
     }
