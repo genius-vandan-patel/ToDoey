@@ -17,20 +17,20 @@ class HomeTVC: UITableViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        loadItems()
+        fetch()
     }
     
     override var preferredStatusBarStyle: UIStatusBarStyle {
         return .lightContent
     }
-
+    
     // MARK: - Table view data source
-
+    
     override func numberOfSections(in tableView: UITableView) -> Int {
         // #warning Incomplete implementation, return the number of sections
         return 1
     }
-
+    
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         // #warning Incomplete implementation, return the number of rows
         return itemsArray.count
@@ -91,15 +91,34 @@ class HomeTVC: UITableViewController {
         alert.addAction(action)
         present(alert, animated: true)
     }
-    
-    func loadItems() {
-        let request: NSFetchRequest<Item> = Item.fetchRequest()
+}
+
+extension HomeTVC: UISearchBarDelegate {
+    func fetch(_ request: NSFetchRequest<Item> = Item.fetchRequest()) {
         do {
             itemsArray = try context.fetch(request)
             tableView.reloadData()
         } catch {
             print("Error fetching data with context : ", error.localizedDescription)
         }
-        
+    }
+    
+    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+        if searchBar.text?.count == 0 {
+            fetch()
+            DispatchQueue.main.async { searchBar.resignFirstResponder() }
+        } else {
+            let request: NSFetchRequest<Item> = Item.fetchRequest()
+            request.predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!)
+            request.sortDescriptors = [NSSortDescriptor(key: "title", ascending: true)]
+            fetch(request)
+        }
+    }
+    
+    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+        let request: NSFetchRequest<Item> = Item.fetchRequest()
+        request.predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!)
+        request.sortDescriptors = [NSSortDescriptor(key: "title", ascending: true)]
+        fetch(request)
     }
 }
